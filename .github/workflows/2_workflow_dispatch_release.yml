@@ -78,7 +78,7 @@ jobs:
 
 # создаёт тег, с номером текущей версии, который указывает на последний коммит в главной ветке
   create-tag:
-    needs: create-release-branch
+    needs: build-and-push-docker
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
