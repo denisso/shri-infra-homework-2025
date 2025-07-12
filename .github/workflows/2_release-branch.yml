@@ -1,4 +1,6 @@
 # здесь и дальше версией релиза будет считаться номер запуска флоу ${{ github.run_number }}
+# отводит от main релизуню ветку releases/<версия_релиза>
+
 name: 2 Flow - Create release branch
 
 on:
