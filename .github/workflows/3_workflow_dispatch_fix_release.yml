@@ -1,4 +1,4 @@
-name: 3 Flow - Fix Release
+name: 3 Flow - Manual Fix Release
 
 on:
   workflow_dispatch:
@@ -30,6 +30,10 @@ jobs:
 
       - name: Run tests
         run: npm run test
+# собирает docker-образ с двумя тегами:
+# - cr.yandex/<идентификатор_реестра>/app:<версия_релиза>_fix<номер_запуска_фиксрелизного_флоу>
+# - cr.yandex/<идентификатор_реестра>/app:<версия_релиза>_latest
+# - загружает docker-образ в Container Registry (в реджистри должен появиться образ с двумя тегами, у старого образа тег latest пропадёт)
   build-and-push:
     needs: fix-checks
     runs-on: ubuntu-latest
@@ -58,3 +62,47 @@ jobs:
         run: |
           docker push $REGISTRY/$IMAGE_NAME:${{ github.event.inputs.release_version }}_fix${{ steps.fixver.outputs.fix_number }}
           docker push $REGISTRY/$IMAGE_NAME:${{ github.event.inputs.release_version }}_latest
+  # создаёт тег с номером текущего релиза + пометкой fix и номером фикса
+  create-fix-tag:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: releases/${{ github.event.inputs.release_version }}
+
+      - name: Tag and Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
+          git push origin ${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
+# добавляет комментарий в Issue, который содержит:
+# - дату фикса,
+# - автора фикса (тот, кто запустил флоу),
+# -  список коммитов от предыдущего релизного (или фиксрелизного) тега
+# - ссылку на docker-образом в Yandex Container Registry cr.yandex/<идентификатор_реестра>/app:<версия_релиза>_fix<номер_запуска_фиксрелизного_флоу>
+  comment-on-issue:
+    needs: create-fix-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get commits since last tag
+        id: changelog
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^)
+          echo "log=$(git log $LAST_TAG..HEAD --pretty=format:'- %s (%an)')" >> $GITHUB_OUTPUT
+
+      - name: Comment on issue
+        uses: JasonEtco/create-an-issue@v2.9.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          changelog: ${{ steps.changelog.outputs.log }}
+          version: ${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
+        with:
+          filename: .github/workflows/fix_comment.md
+
+
