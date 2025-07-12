@@ -81,13 +81,18 @@ jobs:
     needs: create-release-branch
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # нужно для работы с тегами и историей
+
       - name: Create git tag
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git fetch --all
-          git tag ${{ steps.release.outputs.version }}
-          git push origin ${{ steps.release.outputs.version }}
+          git tag ${{ needs.create-release-branch.outputs.version }}
+          git push origin ${{ needs.create-release-branch.outputs.version }}
 # создаёт Issue в GitHub, которое содержит всю важную информацию:
 # - дату,
 # - автора релиза (тот, кто запустил флоу),
