@@ -45,3 +45,49 @@ jobs:
           git config user.email "github-actions@github.com"
           git checkout -b releases/${{ steps.release.outputs.version }}
           git push origin releases/${{ steps.release.outputs.version }}
+# собирает docker-образ с двумя тегами тегами:
+# - cr.yandex/<идентификатор_реестра>/app:<версия_релиза>
+# - cr.yandex/<идентификатор_реестра>/app:<версия_релиза>_latest
+# загружает docker-образ в Container Registry (необходимо, чтобы реджистри отображались оба тега)
+  build-and-push-docker:
+    needs: create-release-branch
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: cr.yandex/crpsnfi08uittb7ub654
+      IMAGE_NAME: app
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        id: release
+        run: echo "version=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Login to Yandex Container Registry
+        run: echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login \
+          --username oauth \
+          --password-stdin \
+          cr.yandex
+
+      - name: Build Docker image
+        run: |
+          docker build -t $REGISTRY/$IMAGE_NAME:${{ steps.release.outputs.version }} .
+          docker tag $REGISTRY/$IMAGE_NAME:${{ steps.release.outputs.version }} $REGISTRY/$IMAGE_NAME:${{ steps.release.outputs.version }}_latest
+
+      - name: Push Docker image
+        run: |
+          docker push $REGISTRY/$IMAGE_NAME:${{ steps.release.outputs.version }}
+          docker push $REGISTRY/$IMAGE_NAME:${{ steps.release.outputs.version }}_latest
+
+# создаёт тег, с номером текущей версии, который указывает на последний коммит в главной ветке
+
+
+
+# создаёт Issue в GitHub, которое содержит всю важную информацию:
+# - дату,
+# - автора релиза (тот, кто запустил флоу),
+# - номер версии (${{ github.run_number }}),
+# - список коммитов от предыдущего релизного (или фиксрелизного) тега,
+# - ссылку на docker-образом в Yandex Container Registry cr.yandex/<идентификатор_реестра>/app:<версия_релиза>
+
+# обновляет файл CHANGELOG.md в корне проекта, дописывает сверху новую версию в виде заголовка, а под ней — список коммитов от предыдущего релизного (или фиксрелизного) тега
