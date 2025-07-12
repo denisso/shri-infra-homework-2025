@@ -138,22 +138,18 @@ jobs:
           echo "log<<EOF" >> $GITHUB_OUTPUT
           echo "$LOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Issue
-        uses: peter-evans/create-issue@v4
+      - uses: JasonEtco/create-an-issue@v2.9.1
+        name: Create an issue
+        id: issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          changelog: ${{ steps.changelog.outputs.clean_changelog }}
+          tag: ${{ github.ref_name }}
         with:
-          title: Release ${{ github.run_number }}
-          body: |
-            📦 **Release ${{ github.run_number }}**
-            📅 Date: ${{ github.event_date || github.event.head_commit.timestamp }}
-            👤 Author: ${{ github.actor }}
-            🔖 Version: ${{ github.run_number }}
-
-            ### Changelog:
-            ${{ steps.changelog.outputs.log }}
-
-            ### Docker image:
-            cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.run_number }}
+          assignees: "${{ github.actor }}"
+          update_existing: true
+          search_existing: all
+          filename: .github/workflows/issue.md
 
       - name: Update CHANGELOG.md
         run: |
