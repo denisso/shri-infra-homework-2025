@@ -1,5 +1,5 @@
 # запускает параллельно линтер через npm run lint и тесты через npm run test на PR
-name: Flow 1 PR Checks
+name: 1 Flow - PR Checks
 on:
   pull_request:
     branches: [main]

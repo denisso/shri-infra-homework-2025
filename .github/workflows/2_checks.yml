@@ -1,5 +1,5 @@
 # запускает параллельно линтер и тесты вручную
-name: 2 Flow Manual Check
+name: 2 Flow - Manual Check
 
 on:
   workflow_dispatch:
