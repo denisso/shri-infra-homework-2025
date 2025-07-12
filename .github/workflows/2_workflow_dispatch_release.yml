@@ -140,7 +140,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Issue
-        uses: peter-evans/create-issue@v5
+        uses: peter-evans/create-issue@v4
         with:
           title: Release ${{ github.run_number }}
           body: |
@@ -153,7 +153,7 @@ jobs:
             ${{ steps.changelog.outputs.log }}
 
             ### Docker image:
-            cr.yandex/"${{ secrets.YC_ID_CONTAINER }}"/app:${{ github.run_number }}
+            cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.run_number }}
 
       - name: Update CHANGELOG.md
         run: |
