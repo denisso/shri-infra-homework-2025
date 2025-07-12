@@ -90,11 +90,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get commits since last tag
+      - name: Get commit logs since last tag
         id: changelog
         run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^)
-          echo "log=$(git log $LAST_TAG..HEAD --pretty=format:'- %s (%an)')" >> $GITHUB_OUTPUT
+          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            LAST_TAG=$(git describe --tags --abbrev=0)
+            echo "log=$(git log $LAST_TAG..HEAD --pretty=format:'- %s (%an)')" >> $GITHUB_OUTPUT
+          else
+            echo "log=$(git log --pretty=format:'- %s (%an)')" >> $GITHUB_OUTPUT
+          fi
 
       - name: Comment on issue
         uses: JasonEtco/create-an-issue@v2.9.1
