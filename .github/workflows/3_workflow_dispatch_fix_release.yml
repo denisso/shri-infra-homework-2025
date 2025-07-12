@@ -1,0 +1,60 @@
+name: 3 Flow - Fix Release
+
+on:
+  workflow_dispatch:
+# принимает на вход версию релиза и все действия выполняет в ветке этого релиза
+    inputs:
+      release_version:
+        description: 'Release version (e.g. 10)'
+        required: true
+jobs:
+# запускает параллельно проверку типов и тесты
+  fix-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: releases/${{ github.event.inputs.release_version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run types check
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+  build-and-push:
+    needs: fix-checks
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: cr.yandex/${{ secrets.YC_ID_CONTAINER }}
+      IMAGE_NAME: app
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+        with:
+          ref: releases/${{ github.event.inputs.release_version }}
+
+      - name: Login to Yandex Container Registry
+        run: echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login --username oauth --password-stdin cr.yandex
+
+      - name: Set fix version
+        id: fixver
+        run: echo "fix_number=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Build and tag Docker image
+        run: |
+          docker build -t $REGISTRY/$IMAGE_NAME:${{ github.event.inputs.release_version }}_fix${{ steps.fixver.outputs.fix_number }} .
+          docker tag $REGISTRY/$IMAGE_NAME:${{ github.event.inputs.release_version }}_fix${{ steps.fixver.outputs.fix_number }} $REGISTRY/$IMAGE_NAME:${{ github.event.inputs.release_version }}_latest
+
+      - name: Push Docker image
+        run: |
+          docker push $REGISTRY/$IMAGE_NAME:${{ github.event.inputs.release_version }}_fix${{ steps.fixver.outputs.fix_number }}
+          docker push $REGISTRY/$IMAGE_NAME:${{ github.event.inputs.release_version }}_latest
