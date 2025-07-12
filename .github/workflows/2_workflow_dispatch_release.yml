@@ -64,10 +64,7 @@ jobs:
         run: echo "version=${{ github.run_number }}" >> $GITHUB_OUTPUT
 
       - name: Login to Yandex Container Registry
-        run: echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login \
-          --username oauth \
-          --password-stdin \
-          cr.yandex
+        run: echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login  --username oauth --password-stdin cr.yandex
 
       - name: Build Docker image
         run: |
