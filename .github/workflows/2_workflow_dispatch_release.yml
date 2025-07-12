@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm ci
@@ -77,9 +77,17 @@ jobs:
           docker push $REGISTRY/$IMAGE_NAME:${{ steps.release.outputs.version }}_latest
 
 # создаёт тег, с номером текущей версии, который указывает на последний коммит в главной ветке
-#  create-tag:
-
-
+  create-tag:
+    needs: create-release-branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create git tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git fetch --all
+          git tag ${{ steps.release.outputs.version }}
+          git push origin ${{ steps.release.outputs.version }}
 # создаёт Issue в GitHub, которое содержит всю важную информацию:
 # - дату,
 # - автора релиза (тот, кто запустил флоу),

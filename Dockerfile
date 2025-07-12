@@ -1,5 +1,5 @@
 # Базовый образ
-FROM node:20-alpine
+FROM node:22-alpine
 # Рабочая директория
 WORKDIR /app
 # Копируем зависимости
