@@ -1,0 +1,26 @@
+# здесь и дальше версией релиза будет считаться номер запуска флоу ${{ github.run_number }}
+name: 2 Flow - Create release branch
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-release-branch:
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # нужно для создания ветки
+
+      - name: Set release version
+        id: release
+        run: echo "version=${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Create release branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -b releases/${{ steps.release.outputs.version }}
+          git push origin releases/${{ steps.release.outputs.version }}
