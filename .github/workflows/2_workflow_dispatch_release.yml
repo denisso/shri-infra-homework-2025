@@ -53,7 +53,7 @@ jobs:
     needs: create-release-branch
     runs-on: ubuntu-latest
     env:
-      REGISTRY: cr.yandex/"${{ secrets.YC_ID_CONTAINER }}"
+      REGISTRY: cr.yandex/${{ secrets.YC_ID_CONTAINER }}
       IMAGE_NAME: app
     steps:
       - name: Checkout code
