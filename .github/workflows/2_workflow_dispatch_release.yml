@@ -53,7 +53,7 @@ jobs:
     needs: create-release-branch
     runs-on: ubuntu-latest
     env:
-      REGISTRY: cr.yandex/crpsnfi08uittb7ub654
+      REGISTRY: cr.yandex/"${{ secrets.YC_ID_CONTAINER }}"
       IMAGE_NAME: app
     steps:
       - name: Checkout code
@@ -110,3 +110,57 @@ jobs:
 # - ссылку на docker-образом в Yandex Container Registry cr.yandex/<идентификатор_реестра>/app:<версия_релиза>
 
 # обновляет файл CHANGELOG.md в корне проекта, дописывает сверху новую версию в виде заголовка, а под ней — список коммитов от предыдущего релизного (или фиксрелизного) тега
+
+  create-issue-and-changelog:
+    needs: create-tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Get previous tag
+        id: previous-tag
+        run: |
+          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^[0-9]+$' | sed -n '2p')
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
+      - name: Get commits between tags
+        id: changelog
+        run: |
+          LOG=$(git log --pretty=format:"- %s (%an)" ${{ steps.previous-tag.outputs.prev_tag }}..HEAD)
+          echo "log<<EOF" >> $GITHUB_OUTPUT
+          echo "$LOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Issue
+        uses: peter-evans/create-issue@v5
+        with:
+          title: Release ${{ github.run_number }}
+          body: |
+            📦 **Release ${{ github.run_number }}**
+            📅 Date: ${{ github.event_date || github.event.head_commit.timestamp }}
+            👤 Author: ${{ github.actor }}
+            🔖 Version: ${{ github.run_number }}
+
+            ### Changelog:
+            ${{ steps.changelog.outputs.log }}
+
+            ### Docker image:
+            cr.yandex/"${{ secrets.YC_ID_CONTAINER }}"/app:${{ github.run_number }}
+
+      - name: Update CHANGELOG.md
+        run: |
+          echo -e "## Version ${{ github.run_number }}\n${{ steps.changelog.outputs.log }}\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
+
+      - name: Commit updated CHANGELOG.md
+        run: |
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for release ${{ github.run_number }}"
+          git push origin HEAD:main
