@@ -77,7 +77,7 @@ jobs:
           docker push $REGISTRY/$IMAGE_NAME:${{ steps.release.outputs.version }}_latest
 
 # создаёт тег, с номером текущей версии, который указывает на последний коммит в главной ветке
-  create-tag:
+#  create-tag:
 
 
 # создаёт Issue в GitHub, которое содержит всю важную информацию:
