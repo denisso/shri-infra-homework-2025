@@ -78,21 +78,30 @@ jobs:
 
 # создаёт тег, с номером текущей версии, который указывает на последний коммит в главной ветке
   create-tag:
-    needs: build-and-push-docker
+    needs: create-release-branch
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # нужно для работы с тегами и историей
+          fetch-depth: 0  # Нужно, чтобы видеть все коммиты и делать git tag
 
-      - name: Create git tag
+      - name: Set release version
+        id: version
+        run: echo "VERSION=${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Create and push Git tag
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git fetch --all
-          git tag ${{ needs.create-release-branch.outputs.version }}
-          git push origin ${{ needs.create-release-branch.outputs.version }}
+
+          # Удостоверимся, что на main
+          git checkout main
+
+          # Создаём тег и пушим
+          git tag $VERSION
+          git push origin $VERSION
+
 # создаёт Issue в GitHub, которое содержит всю важную информацию:
 # - дату,
 # - автора релиза (тот, кто запустил флоу),
