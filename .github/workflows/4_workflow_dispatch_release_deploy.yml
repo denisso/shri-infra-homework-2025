@@ -45,7 +45,16 @@ jobs:
           LINK="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${VERSION}_latest"
           WEB="http://${{ secrets.SSH_HOST }}/hw/store/"
 
-          BODY="✅ Релиз выкачан в прод\n\n- 📅 Дата: $DATE\n- 👤 Автор: $AUTHOR\n- 🏷️ Версия: $VERSION\n- 🐳 Docker образ: \`$LINK\`"
+          BODY=$(cat <<EOF
+          ✅ Релиз выкачан в прод
+
+          - 📅 Дата: $DATE
+          - 👤 Автор: $AUTHOR
+          - 🏷️ Версия: $VERSION
+          - 🐳 Docker образ: \`$LINK\`
+          - 🌐 Web: [$WEB]($WEB)
+          EOF
+          )
 
           ISSUE_NUMBER=$(gh issue list --state open --search "Release $VERSION" --json number -q ".[0].number")
           if [ -z "$ISSUE_NUMBER" ]; then
@@ -54,4 +63,5 @@ jobs:
           fi
 
           gh issue comment "$ISSUE_NUMBER" --body "$BODY"
+
 
