@@ -125,19 +125,29 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Get previous tag
+      - name: Get previous release tag
         id: previous-tag
         run: |
-          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^[0-9]+$' | sed -n '2p')
+          # Получаем теги без "v", и без сортировки по времени
+          TAGS=$(git tag --sort=-creatordate | grep -E '^[0-9]+(_fix[0-9]+)?$')
+
+          # Берем второй по новизне тег (первый — текущий, второй — предыдущий)
+          PREV_TAG=$(echo "$TAGS" | sed -n '2p')
+
           echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
 
       - name: Get commits between tags
         id: changelog
         run: |
-          LOG=$(git log --pretty=format:"- %s (%an)" ${{ steps.previous-tag.outputs.prev_tag }}..HEAD)
-          echo "log<<EOF" >> $GITHUB_ENV
-          echo "$LOG" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          if [ -z "${{ steps.previous-tag.outputs.prev_tag }}" ]; then
+            echo "log=No previous tag found" >> $GITHUB_OUTPUT
+          else
+            LOG=$(git log --pretty=format:"- %s (%an)" ${{ steps.previous-tag.outputs.prev_tag }}..HEAD)
+            echo "log<<EOF" >> $GITHUB_OUTPUT
+            echo "$LOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
 
       - uses: JasonEtco/create-an-issue@v2.9.1
         name: Create an issue
@@ -157,6 +167,7 @@ jobs:
       - name: Update CHANGELOG.md
         run: |
           echo -e "## Version ${{ github.run_number }}\n${{ steps.changelog.outputs.log }}\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
+
 
       - name: Commit updated CHANGELOG.md
         run: |
