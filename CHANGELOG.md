@@ -1,3 +1,10 @@
+## Version 22
+- fix: 4 Flow список коммитов от предыдущего релизного (или фиксрелизного) тега в комментарии (Denis (mr_dramm))
+- fix: 4 Flow список коммитов от предыдущего релизного (или фиксрелизного) тега в комментарии (Denis (mr_dramm))
+- fix: 4 Flow список коммитов от предыдущего релизного (или фиксрелизного) тега в комментарии (Denis (mr_dramm))
+- fix: 4 Flow список коммитов от предыдущего релизного (или фиксрелизного) тега в комментарии (Denis (mr_dramm))
+- docs: update changelog for release 21 (github-actions)
+
 ## Version 21
 - 2 Flow список коммитов от предыдущего релизного (или фиксрелизного) тега (Denis (mr_dramm))
 - docs: update changelog for release 20 (github-actions)
