@@ -16,6 +16,11 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
+          
+      - name: Check Docker image exists
+        run: |
+          echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login --username oauth --password-stdin cr.yandex
+          docker manifest inspect cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest > /dev/null
 
       - name: Deploy to VM via SSH
         run: |
