@@ -12,18 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check image exists in Yandex Container Registry
-        run: |
-          echo "Checking if image exists: cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest"
-          TOKEN="${{ secrets.YC_OAUTH_TOKEN }}"
-          IMAGE="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" \
-            "https://container-registry.api.cloud.yandex.net/container-registry/v1/images/byTag?tag=${{ github.event.inputs.release_version }}_latest&name=cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app")
-          if [[ "$STATUS" != "200" ]]; then
-            echo "Image $IMAGE not found in Yandex Container Registry"
-            exit 1
-          fi
-
       - name: Deploy to VM via SSH
         run: |
           ssh -i ~/.ssh/vmyandex -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
