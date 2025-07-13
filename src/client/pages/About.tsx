@@ -1,4 +1,4 @@
-import React from "react";
+isimport React from "react";
 import { Helmet } from "react-helmet";
 import { cn } from "@bem-react/classname";
 
@@ -12,7 +12,7 @@ export const About: React.FC = () => {
         <div className="col">
           <h1>About</h1>
           <p>
-            Author: [Your Name]
+            Author: Denis
           </p>
         </div>
       </div>
