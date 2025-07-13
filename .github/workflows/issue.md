@@ -7,7 +7,7 @@ labels: RELEASE
 - 📅 Date: {{ date | date('YYYY-MM-DD HH:mm') }}
 - 👤 Author: {{ env.actor }}
 - 🏷️ Version: {{ env.tag }}
-- 🐳 Docker image: `cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ env.tag }}_latest`
+- 🐳 Docker image: `cr.yandex/{{ env.container }}/app:{{ env.tag }}_latest`
 
 ---
 

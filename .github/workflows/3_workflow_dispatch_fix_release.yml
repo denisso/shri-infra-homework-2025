@@ -108,6 +108,7 @@ jobs:
           tag: ${{ github.run_number }}
           version: ${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
           actor: ${{ github.actor }}
+          container: ${{ secrets.YC_ID_CONTAINER }}
         with:
           filename: .github/workflows/fix_comment.md
 

@@ -8,7 +8,7 @@ labels: FIX
 - 📅 Date: {{ date | date('YYYY-MM-DD HH:mm') }}
 - 👤 Author: {{ env.actor }}
 - 🏷️ Version: {{ env.tag }}
-- 🐳 Docker image: `cr.yandex/<registry_id>/app:{{ env.version }}`
+- 🐳 Docker image: `cr.yandex/{{ env.container }}/app:{{ env.version }}`
 
 ## Commits
 
