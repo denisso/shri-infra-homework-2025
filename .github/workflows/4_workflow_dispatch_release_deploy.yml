@@ -43,6 +43,7 @@ jobs:
           VERSION=${{ github.event.inputs.release_version }}
           AUTHOR=${{ github.actor }}
           LINK="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${VERSION}_latest"
+          WEB="http://${{ secret.SSH_HOST }}/hw/store/"
 
           BODY="✅ Релиз выкачан в прод\n\n- 📅 Дата: $DATE\n- 👤 Автор: $AUTHOR\n- 🏷️ Версия: $VERSION\n- 🐳 Docker образ: \`$LINK\`"
 
