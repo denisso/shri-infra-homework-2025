@@ -31,6 +31,11 @@ jobs:
             docker rm app || true
             docker run -d --name app -p 80:3000 cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
           EOF
+          
+      - name: Checkout code (required for gh CLI)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Add comment to Issue
         env:
