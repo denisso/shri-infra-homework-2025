@@ -12,12 +12,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to VM via SSH
+      - name: Save SSH key
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
 
-          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+      - name: Deploy to VM via SSH
+        run: |
+          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
             echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login --username oauth --password-stdin cr.yandex
             docker pull cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
             docker stop app || true
@@ -25,8 +27,10 @@ jobs:
             docker run -d --name app -p 80:3000 cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
           EOF
 
+      - name: Checkout code (required for gh CLI)
+        uses: actions/checkout@v4
 
-      - name: Add comment to release issue
+      - name: Add comment to Issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -44,3 +48,4 @@ jobs:
           fi
 
           gh issue comment "$ISSUE_NUMBER" --body "$BODY"
+
