@@ -1,0 +1,54 @@
+name: 4 Flow - Deploy release to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Release version (e.g. 10)"
+        required: true
+
+jobs:
+  deploy-to-production:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check image exists in Yandex Container Registry
+        run: |
+          echo "Checking if image exists: cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest"
+          TOKEN="${{ secrets.YC_OAUTH_TOKEN }}"
+          IMAGE="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" \
+            "https://container-registry.api.cloud.yandex.net/container-registry/v1/images/byTag?tag=${{ github.event.inputs.release_version }}_latest&name=cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app")
+          if [[ "$STATUS" != "200" ]]; then
+            echo "Image $IMAGE not found in Yandex Container Registry"
+            exit 1
+          fi
+
+      - name: Deploy to VM via SSH
+        run: |
+          ssh -i ~/.ssh/vmyandex -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+            echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login --username oauth --password-stdin cr.yandex
+            docker pull cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
+            docker stop app || true
+            docker rm app || true
+            docker run -d --name app -p 80:3000 cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
+          EOF
+
+      - name: Add comment to release issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(date +"%Y-%m-%d %H:%M:%S")
+          VERSION=${{ github.event.inputs.release_version }}
+          AUTHOR=${{ github.actor }}
+          LINK="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${VERSION}_latest"
+
+          BODY="✅ Релиз выкачан в прод\n\n- 📅 Дата: $DATE\n- 👤 Автор: $AUTHOR\n- 🏷️ Версия: $VERSION\n- 🐳 Docker образ: \`$LINK\`"
+
+          ISSUE_NUMBER=$(gh issue list --state open --search "Release $VERSION" --json number -q ".[0].number")
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "Issue for Release $VERSION not found."
+            exit 1
+          fi
+
+          gh issue comment "$ISSUE_NUMBER" --body "$BODY"
