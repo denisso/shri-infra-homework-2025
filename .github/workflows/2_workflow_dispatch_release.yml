@@ -135,16 +135,17 @@ jobs:
         id: changelog
         run: |
           LOG=$(git log --pretty=format:"- %s (%an)" ${{ steps.previous-tag.outputs.prev_tag }}..HEAD)
-          echo "log<<EOF" >> $GITHUB_OUTPUT
-          echo "$LOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "log<<EOF" >> $GITHUB_ENV
+          echo "$LOG" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - uses: JasonEtco/create-an-issue@v2.9.1
         name: Create an issue
         id: issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          changelog: ${{ steps.changelog.outputs.clean_changelog }}
-          tag: ${{ github.ref_name }}
+          tag: ${{ github.run_number }}
+          log: ${{ env.log }}
         with:
           assignees: "${{ github.actor }}"
           update_existing: true
