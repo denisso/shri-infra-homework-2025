@@ -14,13 +14,17 @@ jobs:
     steps:
       - name: Deploy to VM via SSH
         run: |
-          ssh -i ~/.ssh/vmyandex -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
+          chmod 600 key.pem
+
+          ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login --username oauth --password-stdin cr.yandex
             docker pull cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
             docker stop app || true
             docker rm app || true
             docker run -d --name app -p 80:3000 cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
           EOF
+
 
       - name: Add comment to release issue
         env:
