@@ -1,3 +1,11 @@
+## Version 20
+- 2 Flow обновление changelog (Denis (mr_dramm))
+- fix: 4 Flow исправления в комментарии в релизном issue (Denis (mr_dramm))
+- 4 ссылка на рабочий web в каментах (Denis (mr_dramm))
+- 4 ссылка на рабочий web в каментах (Denis (mr_dramm))
+- fix добавлены скрипты для docker (Denis (mr_dramm))
+- docs: update changelog for release 19 (github-actions)
+
 ## Version 19
 
 
