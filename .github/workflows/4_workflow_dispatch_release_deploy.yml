@@ -31,7 +31,7 @@ jobs:
             docker rm app || true
             docker run -d --name app -p 80:3000 cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
           EOF
-          
+
       - name: Checkout code (required for gh CLI)
         uses: actions/checkout@v4
         with:
@@ -41,52 +41,57 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DATE=$(date +"%Y-%m-%d %H:%M:%S")
+          DATE=$(date +"%Y-%m-%d %H:%M")
           VERSION=${{ github.event.inputs.release_version }}
           AUTHOR=${{ github.actor }}
-          LINK="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${VERSION}_latest"
-          WEB="http://${{ secrets.SSH_HOST }}/hw/store/"
+          IMAGE_LINK="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${VERSION}_latest"
+          WEB_LINK="http://${{ secrets.SSH_HOST }}/hw/store"
 
-          # Получаем текущий тег
-          CUR_TAG=$(git describe --tags --abbrev=0)
+          # Fetch all tags
+          TAGS=($(git tag --sort=-creatordate | grep -E '^[0-9]+(_fix[0-9]+)?$'))
 
-          # Находим предыдущий тег по порядку (чистые релизы и фикс-релизы)
-          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^[0-9]+(_fix[0-9]+)?$' | grep -B1 "^$CUR_TAG$" | head -n 1)
+          # Find current tag index
+          CURRENT_TAG_INDEX=-1
+          for i in "${!TAGS[@]}"; do
+            if [[ "${TAGS[$i]}" == "$VERSION" ]]; then
+              CURRENT_TAG_INDEX=$i
+              break
+            fi
+          done
 
-          # Получаем changelog между PREV_TAG и CUR_TAG
-          if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$CUR_TAG" ]; then
-            CHANGELOG="- Первый релиз — предыдущий тег не найден"
+          # Determine changelog
+          if [[ $CURRENT_TAG_INDEX -le 0 ]]; then
+            CHANGELOG="- First release — no previous tag found"
           else
-            CHANGELOG=$(git log "$PREV_TAG".."$CUR_TAG" --pretty=format:"- %s (%an)")
+            PREVIOUS_TAG="${TAGS[$((CURRENT_TAG_INDEX + 1))]}"
+            CHANGELOG=$(git log "$PREVIOUS_TAG".."$VERSION" --pretty=format:"- %s (%an)")
             if [ -z "$CHANGELOG" ]; then
-              CHANGELOG="- Нет изменений между $PREV_TAG и $CUR_TAG"
+              CHANGELOG="- No changes between $PREVIOUS_TAG and $VERSION"
             fi
           fi
 
-          # Формируем тело комментария
           BODY=$(cat <<EOF
-          ✅ Релиз выкачан в прод
+          ✅ Deployed to production
 
-          - 📅 Дата: $DATE
-          - 👤 Автор: $AUTHOR
-          - 🏷️ Версия: $VERSION
-          - 🐳 Docker образ: \`$LINK\`
-          - 🌐 Web: [$WEB]($WEB)
+          - 📅 Date: $DATE
+          - 👤 Author: $AUTHOR
+          - 🏷️ Version: $VERSION
+          - 🐳 Docker image: \`$IMAGE_LINK\`
+          - 🌐 Web: [$WEB_LINK]($WEB_LINK)
 
-          ## Изменения:
+          ### Changelog:
           $CHANGELOG
           EOF
           )
 
-          # Получаем номер issue по названию
           ISSUE_NUMBER=$(gh issue list --state open --search "Release $VERSION" --json number -q ".[0].number")
           if [ -z "$ISSUE_NUMBER" ]; then
             echo "Issue for Release $VERSION not found."
             exit 1
           fi
 
-          # Добавляем комментарий в issue
           gh issue comment "$ISSUE_NUMBER" --body "$BODY"
+
 
 
 
