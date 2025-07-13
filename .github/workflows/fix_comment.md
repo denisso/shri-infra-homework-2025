@@ -5,9 +5,10 @@ labels: FIX
 
 ## Fix Info
 
-- Author: @{{ github.actor }}
-- Date: {{ date | date('YYYY-MM-DD') }}
-- Docker image: `cr.yandex/<registry_id>/app:{{ env.version }}`
+- 📅 Date: {{ date | date('YYYY-MM-DD HH:mm') }}
+- 👤 Author: {{ env.actor }}
+- 🏷️ Version: {{ env.tag }}
+- 🐳 Docker image: `cr.yandex/<registry_id>/app:{{ env.version }}`
 
 ## Commits
 

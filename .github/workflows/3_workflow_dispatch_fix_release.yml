@@ -104,8 +104,10 @@ jobs:
         uses: JasonEtco/create-an-issue@v2.9.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          changelog: ${{ steps.changelog.outputs.log }}
+          log: ${{ steps.changelog.outputs.log }}
+          tag: ${{ github.run_number }}
           version: ${{ github.event.inputs.release_version }}_fix${{ github.run_number }}
+          actor: ${{ github.actor }}
         with:
           filename: .github/workflows/fix_comment.md
 
