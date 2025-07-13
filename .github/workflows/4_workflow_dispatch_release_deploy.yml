@@ -47,10 +47,10 @@ jobs:
           IMAGE_LINK="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${VERSION}_latest"
           WEB_LINK="http://${{ secrets.SSH_HOST }}/hw/store"
 
-          # Fetch all tags
-          TAGS=($(git tag --sort=-creatordate | grep -E '^[0-9]+(_fix[0-9]+)?$'))
+          # Fetch tags sorted by creation date (oldest to newest)
+          TAGS=($(git tag --sort=creatordate | grep -E '^[0-9]+(_fix[0-9]+)?$'))
 
-          # Find current tag index
+          # Find index of current tag
           CURRENT_TAG_INDEX=-1
           for i in "${!TAGS[@]}"; do
             if [[ "${TAGS[$i]}" == "$VERSION" ]]; then
@@ -63,13 +63,14 @@ jobs:
           if [[ $CURRENT_TAG_INDEX -le 0 ]]; then
             CHANGELOG="- First release — no previous tag found"
           else
-            PREVIOUS_TAG="${TAGS[$((CURRENT_TAG_INDEX + 1))]}"
+            PREVIOUS_TAG="${TAGS[$((CURRENT_TAG_INDEX - 1))]}"
             CHANGELOG=$(git log "$PREVIOUS_TAG".."$VERSION" --pretty=format:"- %s (%an)")
             if [ -z "$CHANGELOG" ]; then
               CHANGELOG="- No changes between $PREVIOUS_TAG and $VERSION"
             fi
           fi
 
+          # Build comment body
           BODY=$(cat <<EOF
           ✅ Deployed to production
 
@@ -84,13 +85,16 @@ jobs:
           EOF
           )
 
+          # Get Issue number for the release
           ISSUE_NUMBER=$(gh issue list --state open --search "Release $VERSION" --json number -q ".[0].number")
           if [ -z "$ISSUE_NUMBER" ]; then
-            echo "Issue for Release $VERSION not found."
+            echo "❌ Issue for Release $VERSION not found."
             exit 1
           fi
 
+          # Post comment
           gh issue comment "$ISSUE_NUMBER" --body "$BODY"
+
 
 
 
