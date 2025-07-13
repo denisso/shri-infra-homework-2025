@@ -34,6 +34,8 @@ jobs:
 
       - name: Checkout code (required for gh CLI)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Add comment to Issue
         env:
@@ -45,23 +47,42 @@ jobs:
           LINK="cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${VERSION}_latest"
           WEB="http://${{ secrets.SSH_HOST }}/hw/store/"
 
+          # Получаем предыдущий релизный/фиксрелизный тег
+          PREV_TAG=$(git tag --sort=-creatordate | grep -E '^[0-9]+(_fix[0-9]+)?$' | sed -n '2p')
+
+          if [ -z "$PREV_TAG" ]; then
+            LOG=$(git log --pretty=format:"- %s (%an)")
+            PREV_TAG="🚀 Первый релиз (нет предыдущего тега)"
+          else
+            LOG=$(git log "$PREV_TAG"..HEAD --pretty=format:"- %s (%an)")
+          fi
+
+          # Формируем тело комментария
           BODY=$(cat <<EOF
           ✅ Релиз выкачан в прод
 
-          - 📅 Дата: $DATE
-          - 👤 Автор: $AUTHOR
-          - 🏷️ Версия: $VERSION
-          - 🐳 Docker образ: \`$LINK\`
+          - 📅 Дата: $DATE  
+          - 👤 Автор: $AUTHOR  
+          - 🏷️ Версия: $VERSION  
+          - 🐳 Docker образ: \`$LINK\`  
           - 🌐 Web: [$WEB]($WEB)
+
+          ## Коммиты между тегами ($PREV_TAG → $VERSION)
+
+          $LOG
           EOF
           )
 
+          # Получаем номер Issue по названию
           ISSUE_NUMBER=$(gh issue list --state open --search "Release $VERSION" --json number -q ".[0].number")
+
           if [ -z "$ISSUE_NUMBER" ]; then
             echo "Issue for Release $VERSION not found."
             exit 1
           fi
 
+          # Добавляем комментарий
           gh issue comment "$ISSUE_NUMBER" --body "$BODY"
+
 
 
