@@ -2,12 +2,14 @@ name: 4 Flow - Deploy release to Production
 
 on:
   workflow_dispatch:
+    #принимает на вход версию релиза
     inputs:
       release_version:
         description: "Release version (e.g. 10)"
         required: true
 
 jobs:
+
   deploy-to-production:
     runs-on: ubuntu-latest
 
@@ -16,12 +18,12 @@ jobs:
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > key.pem
           chmod 600 key.pem
-          
+# проверяет, что существует образ в Container Registry с тегом <версия_релиза>_latest
       - name: Check Docker image exists
         run: |
           echo "${{ secrets.YC_OAUTH_TOKEN }}" | docker login --username oauth --password-stdin cr.yandex
           docker manifest inspect cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest > /dev/null
-
+# по ssh запускает Docker-образ на виртуальной машине
       - name: Deploy to VM via SSH
         run: |
           ssh -i key.pem -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
@@ -31,7 +33,7 @@ jobs:
             docker rm app || true
             docker run -d --name app -p 80:3000 cr.yandex/${{ secrets.YC_ID_CONTAINER }}/app:${{ github.event.inputs.release_version }}_latest
           EOF
-
+# в Issue добавьте комментарий о том, что релиз выкачен в прод c датой и человеком, который запустил выкатку в прод
       - name: Checkout code (required for gh CLI)
         uses: actions/checkout@v4
         with:
