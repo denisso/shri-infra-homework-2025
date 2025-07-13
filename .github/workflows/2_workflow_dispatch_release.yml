@@ -146,6 +146,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.run_number }}
           log: ${{ env.log }}
+          AUTHOR: ${{ github.actor }}
         with:
           assignees: "${{ github.actor }}"
           update_existing: true
