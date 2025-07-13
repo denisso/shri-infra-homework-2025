@@ -155,7 +155,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.run_number }}
-          log: ${{ env.log }}
+          log: ${{ steps.changelog.outputs.log }}
           actor: ${{ github.actor }}
           container: ${{ secrets.YC_ID_CONTAINER }}
         with:
