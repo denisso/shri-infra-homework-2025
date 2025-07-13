@@ -1,3 +1,7 @@
+## Version 21
+- 2 Flow список коммитов от предыдущего релизного (или фиксрелизного) тега (Denis (mr_dramm))
+- docs: update changelog for release 20 (github-actions)
+
 ## Version 20
 - 2 Flow обновление changelog (Denis (mr_dramm))
 - fix: 4 Flow исправления в комментарии в релизном issue (Denis (mr_dramm))
