@@ -1,3 +1,6 @@
+## Version 24
+- docs: update changelog for release 23 (github-actions)
+
 ## Version 23
 - fix: 4 Flow коментарии к коду (Denis (mr_dramm))
 - fix: 4 Flow список коммитов от предыдущего релизного (или фиксрелизного) тега в комментарии (Denis (mr_dramm))
